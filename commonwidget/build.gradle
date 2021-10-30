@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdk 30
+    compileSdkVersion 30
 
     defaultConfig {
-        minSdk 21
-        targetSdk 30
+        minSdkVersion 21
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
 
@@ -22,13 +22,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
+//    }
+//    kotlinOptions {
+//        jvmTarget = '1.8'
+//    }
 }
 
 dependencies {
@@ -40,3 +40,19 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
+apply from: '../publish.gradle'
+
+//生成jar包
+//便于复制
+task makeJar(type:Copy){
+    //删除build/libs下的test.jar目录
+    delete 'build/libs/CommonWidget.jar'
+    //从build/intermediates/bundles/debug/目录下的classes.jar导入到build/libs/目录下
+    from('build/intermediates/aar_main_jar/release/')
+    into('build/libs/')
+    include('classes.jar')
+    //重新命名
+    rename('classes.jar','CommonWidget.jar')
+}
+//≤
+makeJar.dependsOn(build)
