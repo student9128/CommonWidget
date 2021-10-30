@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HexagonProgressBar">
+        <attr name="hexagonColor" format="color" />
+        <attr name="hexagonProgressColor" format="color" />
+        <attr name="hexagonWidth" format="dimension" />
+        <attr name="textColor" format="color" />
+        <attr name="textSize" format="dimension" />
+        <attr name="textIsDisplayable" format="boolean" />
+        <attr name="contentColor" format="color" />
+        <attr name="text" format="string" />
+        <attr name="progress" format="integer" />
+    </declare-styleable>
+    <declare-styleable name="ToggleView">
+        <attr name="toggleColor" format="color" />
+        <attr name="toggleCheckedColor" format="color" />
+        <attr name="toggleUnCheckedColor" format="color" />
+        <attr name="toggleChecked" format="boolean" />
+        <attr name="toggleBorderWidth" format="dimension" />
+        <attr name="toggleShadow" format="boolean" />
+        <attr name="toggleShowText" format="boolean" />
+        <attr name="toggleCheckedText" format="string" />
+        <attr name="toggleUnCheckedText" format="string"/>
+        <attr name="toggleCheckedTextColor" format="color|reference" />
+        <attr name="toggleUnCheckedTextColor" format="color|reference" />
+        <attr name="toggleType">
+            <enum name="rectangle" value="100" />
+            <enum name="circle" value="101" />
+            <enum name="circleWithThin" value="102" />
+            <enum name="circleWithThinner" value="103" />
+            <enum name="circleWithThinnest" value="104" />
+            <enum name="circleWithConcentric" value="105" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="ReverseProgressBar">
+        <!--第一层背景颜色-->
+        <attr name="progressBgColor" format="color" />
+        <!--第一层文字颜色-->
+        <attr name="progressBgTextColor" format="color" />
+        <!--第二层背景颜色-->
+        <attr name="progressScColor" format="color" />
+        <!--第二层文字颜色-->
+        <attr name="progressScTextColor" format="color" />
+        <!--进度-->
+        <attr name="progressX" format="float" />
+        <!--圆角半径-->
+        <attr name="radiusX" format="dimension" />
+        <!--字体大小-->
+        <attr name="contentTextSize" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="ProgressTextView">
+        <attr name="backgroundTextColor" format="color" />
+        <attr name="foregroundTextColor" format="color" />
+    </declare-styleable>
+</resources>
