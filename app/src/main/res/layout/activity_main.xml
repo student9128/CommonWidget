@@ -21,4 +21,11 @@
         android:layout_height="30dp"
         app:toggleBorderWidth="3dp"
         app:toggleCheckedColor="@color/teal_700" />
+
+    <com.kevin.commonwidget.ToggleView
+        android:layout_width="60dp"
+        android:layout_height="30dp"
+        app:toggleBorderWidth="3dp"
+        app:toggleCheckedColor="@color/purple_200"
+        app:toggleType="rectangle" />
 </LinearLayout>
