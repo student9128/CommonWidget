@@ -24,16 +24,75 @@ class CircleWaveView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) :
     View(context, attrs, defStyleAttr), View.OnClickListener {
-    private val circleFill = 100
-    private val circleStroke = 101
+    companion object {
+        val circleFill = 100
+        val circleStroke = 101
+    }
+
     private val mDefaultBackgroundColor = 0xff2196f3.toInt()
-    private var mBackgroundColor: Int = 0xffebebeb.toInt()
-    private var mWaveColor: Int = 0xFF03DAC5.toInt()
-    private var mProgressColor: Int = 0xFFFFFFFF.toInt()
+    var mBackgroundColor: Int = 0xffebebeb.toInt()
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mWaveColor: Int = 0xFF03DAC5.toInt()
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mProgressColor: Int = 0xFFFFFFFF.toInt()
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mCircleType = circleFill
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mTextSize = 0
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mCircleStrokeWidth = 5
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mWaveCount = 2
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mProgress = 50
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mShowProgressText = false
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mShowStroke = false
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mWaveDuration = 3000
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mProgressDuration = 5000
+        set(value) {
+            field = value
+            invalidate()
+        }
     private var mDefaultWidth = 10
     private var mDefaultHeight = 10
     private var mR = 5f
-    private var mWaveCount = 2
     private var mWaveLength = 0
     private var mPaddingLeft = 0
     private var mPaddingTop = 0
@@ -51,9 +110,6 @@ class CircleWaveView @JvmOverloads constructor(
     private var animator: ValueAnimator? = null
     private var mSwing = 0
     private var percent = 0f
-    private var mCircleType = circleFill
-    private var mTextSize = 0
-    private var mCircleStrokeWidth = 5
     private val mPath: Path by lazy { Path() }
 
     init {
@@ -73,19 +129,16 @@ class CircleWaveView @JvmOverloads constructor(
                 R.styleable.CircleWaveView_textSize,
                 DisplayUtils.sp2px(getContext(), 14)
             )
+            mProgress = it.getInt(R.styleable.CircleWaveView_progress, 50)
+            mShowProgressText = it.getBoolean(R.styleable.CircleWaveView_showProgressText, false)
+            mShowStroke = it.getBoolean(R.styleable.CircleWaveView_showStroke, false)
+            mWaveDuration = it.getInt(R.styleable.CircleWaveView_waveDuration, 3000)
+            mProgressDuration = it.getInt(R.styleable.CircleWaveView_progressDuration, 5000)
             it.recycle()
         }
         mDefaultWidth = DisplayUtils.dip2px(getContext(), 50f)
         mDefaultHeight = DisplayUtils.dip2px(getContext(), 50f)
-        mBackgroundPaint.color = mBackgroundColor
-        mWavePaint.color = mWaveColor
-        mBackgroundPaint.style =
-            if (mCircleType == circleFill) Paint.Style.FILL else Paint.Style.STROKE
-        mBackgroundPaint.strokeWidth = mCircleStrokeWidth.toFloat()
-        mWavePaint.style = Paint.Style.FILL
-        LogUtils.logD("Circle", "init")
-        mProgressPaint.textSize = mTextSize.toFloat()
-        mProgressPaint.color = mProgressColor
+
         setOnClickListener(this)
 
     }
@@ -95,8 +148,8 @@ class CircleWaveView @JvmOverloads constructor(
         val width = getSmartSize(mDefaultWidth, widthMeasureSpec)
         val height = getSmartSize(mDefaultHeight, heightMeasureSpec)
         val size = min(width, height)
+//        LogUtils.logD("CircleWave", "size=$size,width=$width,height=$height")
         setMeasuredDimension(size, size)
-        LogUtils.logD("Circle", "onMeasure")
     }
 
     //    @JvmName("getSmartSize")
@@ -125,41 +178,68 @@ class CircleWaveView @JvmOverloads constructor(
         mWaveLength = ((width - paddingLeft - paddingRight) / (mWaveCount * 1f)).roundToInt()
         val width = width - paddingLeft - paddingRight
         val height = height - paddingTop - paddingBottom
-        LogUtils.logD("CircleWave", "onLayout width=$width,height=$height,left=$left,top=$top")
         mSwing = width / 10
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        val centerY = ((mTop + mBottom) / 2).toFloat()
-        val centerX = ((mLeft + mRight) / 2).toFloat()
+        LogUtils.logW("CircleWave", "onDraw waveColor=$mWaveColor")
+        mBackgroundPaint.color = mBackgroundColor
+        mWavePaint.color = mWaveColor
+        mBackgroundPaint.style =
+            if (mCircleType == circleFill) Paint.Style.FILL else Paint.Style.STROKE
+        mBackgroundPaint.strokeWidth = mCircleStrokeWidth.toFloat()
+        mWavePaint.style = Paint.Style.FILL
+        mProgressPaint.textSize = mTextSize.toFloat()
+        mProgressPaint.color = mProgressColor
+        val centerY = ((bottom - top) / 2).toFloat()
+        val centerX = ((right - left) / 2).toFloat()
         val circlePath = Path()
-        canvas?.translate(-left.toFloat(), -top.toFloat())
         circlePath.addCircle(
             centerX.toFloat(),
             centerY.toFloat(),
             mR.toFloat(), Path.Direction.CW
         )
         canvas?.clipPath(circlePath)
-        canvas!!.drawCircle(
-            centerX.toFloat(),
-            centerY.toFloat(),
-            mR.toFloat(),
-            mBackgroundPaint
-        )
-        val endY: Int = (mTop + (mBottom - mTop) * (1 - percent / 100)).toInt()
+        if (!mShowStroke) {
+            canvas?.let {
+                it.drawCircle(
+                    centerX.toFloat(),
+                    centerY.toFloat(),
+                    mR.toFloat(),
+                    mBackgroundPaint
+                )
+            }
+        }
+        drawWave(canvas, centerX, centerY)
+        if (mShowStroke) {
+            canvas?.let {
+                it.drawCircle(
+                    centerX.toFloat(),
+                    centerY.toFloat(),
+                    mR.toFloat(),
+                    mBackgroundPaint
+                )
+            }
+        }
+        drawText(canvas, centerX, centerY)
+    }
+
+    private fun drawWave(canvas: Canvas?, centerX: Float, centerY: Float) {
+        val endY: Int =
+            if (percent >= 100) -mSwing else ((mBottom - mTop) * (1 - percent / 100)).toInt()
         mPath.moveTo(0f, endY.toFloat())
         for (i in 0..(mWaveCount * 2)) {
-            LogUtils.logD("CircleWave", "i=$i,mWaveCount=$mWaveCount")
+//            LogUtils.logD("CircleWave", "i=$i,mWaveCount=$mWaveCount")
             val y = if (i % 2 == 0) {
-                endY - mSwing
+                endY + mSwing
 //                centerY - mSwing
             } else {
-                centerY + mSwing
-                endY + mSwing
+//                centerY + mSwing
+                endY - mSwing
             }
             val x = (i * mWaveLength + mWaveLength / 2 - mWaveLength * 2 + offset).toFloat()
-            LogUtils.logD("CircleWave", "xx=${(i + 1) * mWaveLength.toFloat()},x=$x,offset=$offset")
+//            LogUtils.logD("CircleWave", "xx=${(i + 1) * mWaveLength.toFloat()},x=$x,offset=$offset")
             mPath.quadTo(
                 x,
                 y.toFloat(),
@@ -171,8 +251,14 @@ class CircleWaveView @JvmOverloads constructor(
         mPath.rLineTo(0f, centerY)
         mPath.rLineTo(-mRight.toFloat(), 0f)
         mPath.close()
-        canvas!!.drawPath(mPath, mWavePaint)
+        if (percent > 0) {
+            canvas!!.drawPath(mPath, mWavePaint)
+        }
         mPath.reset()
+    }
+
+    private fun drawText(canvas: Canvas?, centerX: Float, centerY: Float) {
+        if (!mShowProgressText) return
         val text = "${percent.toInt()}%"
         val bounds = Rect()
         mProgressPaint.getTextBounds(text, 0, text.length, bounds)
@@ -185,19 +271,24 @@ class CircleWaveView @JvmOverloads constructor(
         var i = 0
         animator = ValueAnimator.ofInt(0, mWaveLength * 2)
         animator?.let {
-            it.duration = 3000
+            it.duration = mWaveDuration.toLong()
             it.repeatCount = ValueAnimator.INFINITE
             it.interpolator = LinearInterpolator()
             it.addUpdateListener { animation ->
                 offset = animation?.animatedValue as Int
-                LogUtils.logD("CircleWave", "offset-$offset,i======${++i}")
+//                LogUtils.logD("CircleWave", "offset-$offset,i======${++i}")
                 invalidate()
+                if (percent >= 100) {
+                    if (it.isRunning) {
+                        it.cancel()
+                    }
+                }
             }
 //        it.startDelay
             it.start()
         }
-        val a = ValueAnimator.ofFloat(0f, 80f)
-        a.duration = 10000
+        val a = ValueAnimator.ofFloat(0f, mProgress.toFloat())
+        a.duration = mProgressDuration.toLong()
         a.interpolator = AccelerateDecelerateInterpolator()
         a.addUpdateListener { animation ->
             percent = animation.animatedValue as Float
@@ -214,4 +305,5 @@ class CircleWaveView @JvmOverloads constructor(
     override fun onClick(v: View?) {
         startAnim()
     }
+
 }

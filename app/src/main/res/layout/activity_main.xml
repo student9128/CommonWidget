@@ -28,6 +28,7 @@
             app:toggleCheckedColor="@color/teal_700" />
 
         <com.kevin.commonwidget.ToggleView
+            android:id="@+id/tv"
             android:layout_width="60dp"
             android:layout_height="30dp"
             app:toggleBorderWidth="3dp"
@@ -45,8 +46,9 @@
         <com.kevin.commonwidget.CircleWaveView
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:padding="5dp"
             android:background="@color/design_default_color_error"
+            android:padding="5dp"
+            app:showProgressText="true"
             app:waveColor="@color/teal_700" />
 
         <com.kevin.commonwidget.CircleWaveView
@@ -55,22 +57,31 @@
             android:background="@color/purple_200"
             app:backgroundColor="@color/design_default_color_error"
             app:circleType="stroke"
+            app:showProgressText="true"
             app:waveCount="1" />
 
         <com.kevin.commonwidget.CircleWaveView
+            android:id="@+id/cwv"
             android:layout_width="150dp"
             android:layout_height="150dp"
             app:backgroundColor="@color/purple_700"
             app:circleType="fill"
+            app:showProgressText="true"
             app:waveCount="1" />
-        <com.kevin.commonwidgetlib.WaveXView
+
+        <com.kevin.commonwidget.CircleWaveView
             android:layout_width="300dp"
-            app:waveXShape="circle"
-            app:behindWaveColor="@color/design_default_color_error"
-            app:frontWaveColor="@color/purple_200"
-            app:showWave="true"
-            app:waveShiftRatio="0.5"
-            android:layout_height="300dp"/>
+            android:layout_height="300dp"
+            app:backgroundColor="@color/teal_200"
+            app:circleStrokeWidth="30dp"
+            app:circleType="stroke"
+            app:showProgressText="true"
+            app:showStroke="true"
+            app:textSize="20sp"
+            app:textColor="@color/teal_200"
+            app:waveColor="@color/yellow"
+            app:waveCount="1" />
+
     </LinearLayout>
 
 </ScrollView>

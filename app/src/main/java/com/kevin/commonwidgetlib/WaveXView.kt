@@ -1,319 +1,296 @@
-package com.kevin.commonwidgetlib;
+package com.kevin.commonwidgetlib
 
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
-import android.graphics.Shader;
-import android.util.AttributeSet;
-import android.view.View;
+import android.content.Context
+import android.graphics.*
+import android.util.AttributeSet
+import android.view.View
 
-import androidx.annotation.Nullable;
-
-public class WaveXView extends View {
-    /**
-     * +------------------------+
-     * |<--wave length->        |______
-     * |   /\          |   /\   |  |
-     * |  /  \         |  /  \  | amplitude
-     * | /    \        | /    \ |  |
-     * |/      \       |/      \|__|____
-     * |        \      /        |  |
-     * |         \    /         |  |
-     * |          \  /          |  |
-     * |           \/           | water level
-     * |                        |  |
-     * |                        |  |
-     * +------------------------+__|____
-     */
-    private static final float DEFAULT_AMPLITUDE_RATIO = 0.05f;
-    private static final float DEFAULT_WATER_LEVEL_RATIO = 0.5f;
-    private static final float DEFAULT_WAVE_LENGTH_RATIO = 1.0f;
-    private static final float DEFAULT_WAVE_SHIFT_RATIO = 0.0f;
-
-    public static final int DEFAULT_BEHIND_WAVE_COLOR = Color.parseColor("#28FFFFFF");
-    public static final int DEFAULT_FRONT_WAVE_COLOR = Color.parseColor("#3CFFFFFF");
-    public static final ShapeType DEFAULT_WAVE_SHAPE = ShapeType.CIRCLE;
-
-
-    public enum ShapeType {
-        CIRCLE,
-        SQUARE
+class WaveXView : View {
+    enum class ShapeType {
+        CIRCLE, SQUARE
     }
 
     // if true, the shader will display the wave
-    private boolean mShowWave;
+    var isShowWave = false
 
     // shader containing repeated waves
-    private BitmapShader mWaveShader;
+    private var mWaveShader: BitmapShader? = null
+
     // shader matrix
-    private Matrix mShaderMatrix;
+    private var mShaderMatrix: Matrix? = null
+
     // paint to draw wave
-    private Paint mViewPaint;
+    private var mViewPaint: Paint? = null
+
     // paint to draw border
-    private Paint mBorderPaint;
-
-    private float mDefaultAmplitude;
-    private float mDefaultWaterLevel;
-    private float mDefaultWaveLength;
-    private double mDefaultAngularFrequency;
-
-    private float mAmplitudeRatio = DEFAULT_AMPLITUDE_RATIO;
-    private float mWaveLengthRatio = DEFAULT_WAVE_LENGTH_RATIO;
-    private float mWaterLevelRatio = DEFAULT_WATER_LEVEL_RATIO;
-    private float mWaveShiftRatio = DEFAULT_WAVE_SHIFT_RATIO;
-
-    private int mBehindWaveColor = DEFAULT_BEHIND_WAVE_COLOR;
-    private int mFrontWaveColor = DEFAULT_FRONT_WAVE_COLOR;
-    private ShapeType mShapeType = DEFAULT_WAVE_SHAPE;
-
-    public WaveXView(Context context) {
-        super(context);
-        init();
-    }
-
-    public WaveXView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(attrs);
-    }
-
-    public WaveXView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init(attrs);
-    }
-
-    private void init() {
-        mShaderMatrix = new Matrix();
-        mViewPaint = new Paint();
-        mViewPaint.setAntiAlias(true);
-    }
-
-    private void init(AttributeSet attrs) {
-        init();
-
-        TypedArray typedArray = getContext().getTheme().obtainStyledAttributes(attrs,
-                R.styleable.WaveXView, 0, 0);
-
-        mAmplitudeRatio = typedArray.getFloat(R.styleable.WaveXView_amplitudeRatio, DEFAULT_AMPLITUDE_RATIO);
-        mWaterLevelRatio = typedArray.getFloat(R.styleable.WaveXView_waveWaterLevel, DEFAULT_WATER_LEVEL_RATIO);
-        mWaveLengthRatio = typedArray.getFloat(R.styleable.WaveXView_waveLengthRatio, DEFAULT_WAVE_LENGTH_RATIO);
-        mWaveShiftRatio = typedArray.getFloat(R.styleable.WaveXView_waveShiftRatio, DEFAULT_WAVE_SHIFT_RATIO);
-        mFrontWaveColor = typedArray.getColor(R.styleable.WaveXView_frontWaveColor, DEFAULT_FRONT_WAVE_COLOR);
-        mBehindWaveColor = typedArray.getColor(R.styleable.WaveXView_behindWaveColor, DEFAULT_BEHIND_WAVE_COLOR);
-        mShapeType = typedArray.getInt(R.styleable.WaveXView_waveXShape, 0) == 0 ? ShapeType.CIRCLE : ShapeType.SQUARE;
-        mShowWave = typedArray.getBoolean(R.styleable.WaveXView_showWave, true);
-
-        typedArray.recycle();
-
-    }
-
-    public float getWaveShiftRatio() {
-        return mWaveShiftRatio;
-    }
+    private var mBorderPaint: Paint? = null
+    private var mDefaultAmplitude = 0f
+    private var mDefaultWaterLevel = 0f
+    private var mDefaultWaveLength = 0f
+    private var mDefaultAngularFrequency = 0.0
+    private var mAmplitudeRatio = DEFAULT_AMPLITUDE_RATIO
 
     /**
-     * Shift the wave horizontally according to <code>waveShiftRatio</code>.
-     *
-     * @param waveShiftRatio Should be 0 ~ 1. Default to be 0.
-     *                       Result of waveShiftRatio multiples width of WaveView is the length to shift.
-     */
-    public void setWaveShiftRatio(float waveShiftRatio) {
-        if (mWaveShiftRatio != waveShiftRatio) {
-            mWaveShiftRatio = waveShiftRatio;
-            invalidate();
-        }
-    }
-
-    public float getWaterLevelRatio() {
-        return mWaterLevelRatio;
-    }
-
-    /**
-     * Set water level according to <code>waterLevelRatio</code>.
-     *
-     * @param waterLevelRatio Should be 0 ~ 1. Default to be 0.5.
-     *                        Ratio of water level to WaveView height.
-     */
-    public void setWaterLevelRatio(float waterLevelRatio) {
-        if (mWaterLevelRatio != waterLevelRatio) {
-            mWaterLevelRatio = waterLevelRatio;
-            invalidate();
-        }
-    }
-
-    public float getAmplitudeRatio() {
-        return mAmplitudeRatio;
-    }
-
-    /**
-     * Set vertical size of wave according to <code>amplitudeRatio</code>
-     *
-     * @param amplitudeRatio Default to be 0.05. Result of amplitudeRatio + waterLevelRatio should be less than 1.
-     *                       Ratio of amplitude to height of WaveView.
-     */
-    public void setAmplitudeRatio(float amplitudeRatio) {
-        if (mAmplitudeRatio != amplitudeRatio) {
-            mAmplitudeRatio = amplitudeRatio;
-            invalidate();
-        }
-    }
-
-    public float getWaveLengthRatio() {
-        return mWaveLengthRatio;
-    }
-
-    /**
-     * Set horizontal size of wave according to <code>waveLengthRatio</code>
+     * Set horizontal size of wave according to `waveLengthRatio`
      *
      * @param waveLengthRatio Default to be 1.
-     *                        Ratio of wave length to width of WaveView.
+     * Ratio of wave length to width of WaveView.
      */
-    public void setWaveLengthRatio(float waveLengthRatio) {
-        mWaveLengthRatio = waveLengthRatio;
+    var waveLengthRatio = DEFAULT_WAVE_LENGTH_RATIO
+    private var mWaterLevelRatio = DEFAULT_WATER_LEVEL_RATIO
+    private var mWaveShiftRatio = DEFAULT_WAVE_SHIFT_RATIO
+    private var mBehindWaveColor = DEFAULT_BEHIND_WAVE_COLOR
+    private var mFrontWaveColor = DEFAULT_FRONT_WAVE_COLOR
+    private var mShapeType = DEFAULT_WAVE_SHAPE
+
+    constructor(context: Context?) : super(context) {
+        init()
     }
 
-    public boolean isShowWave() {
-        return mShowWave;
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+        init(attrs)
     }
 
-    public void setShowWave(boolean showWave) {
-        mShowWave = showWave;
+    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(
+        context,
+        attrs,
+        defStyle
+    ) {
+        init(attrs)
     }
 
-    public void setBorder(int width, int color) {
+    private fun init() {
+        mShaderMatrix = Matrix()
+        mViewPaint = Paint()
+        mViewPaint!!.isAntiAlias = true
+    }
+
+    private fun init(attrs: AttributeSet?) {
+        init()
+        val typedArray = context.theme.obtainStyledAttributes(
+            attrs,
+            R.styleable.WaveXView, 0, 0
+        )
+        mAmplitudeRatio =
+            typedArray.getFloat(R.styleable.WaveXView_amplitudeRatio, DEFAULT_AMPLITUDE_RATIO)
+        mWaterLevelRatio =
+            typedArray.getFloat(R.styleable.WaveXView_waveWaterLevel, DEFAULT_WATER_LEVEL_RATIO)
+        waveLengthRatio =
+            typedArray.getFloat(R.styleable.WaveXView_waveLengthRatio, DEFAULT_WAVE_LENGTH_RATIO)
+        mWaveShiftRatio =
+            typedArray.getFloat(R.styleable.WaveXView_waveShiftRatio, DEFAULT_WAVE_SHIFT_RATIO)
+        mFrontWaveColor =
+            typedArray.getColor(R.styleable.WaveXView_frontWaveColor, DEFAULT_FRONT_WAVE_COLOR)
+        mBehindWaveColor =
+            typedArray.getColor(R.styleable.WaveXView_behindWaveColor, DEFAULT_BEHIND_WAVE_COLOR)
+        mShapeType = if (typedArray.getInt(
+                R.styleable.WaveXView_waveXShape,
+                0
+            ) == 0
+        ) ShapeType.CIRCLE else ShapeType.SQUARE
+        isShowWave = typedArray.getBoolean(R.styleable.WaveXView_showWave, true)
+        typedArray.recycle()
+    }
+
+    /**
+     * Shift the wave horizontally according to `waveShiftRatio`.
+     *
+     * @param waveShiftRatio Should be 0 ~ 1. Default to be 0.
+     * Result of waveShiftRatio multiples width of WaveView is the length to shift.
+     */
+    var waveShiftRatio: Float
+        get() = mWaveShiftRatio
+        set(waveShiftRatio) {
+            if (mWaveShiftRatio != waveShiftRatio) {
+                mWaveShiftRatio = waveShiftRatio
+                invalidate()
+            }
+        }
+
+    /**
+     * Set water level according to `waterLevelRatio`.
+     *
+     * @param waterLevelRatio Should be 0 ~ 1. Default to be 0.5.
+     * Ratio of water level to WaveView height.
+     */
+    var waterLevelRatio: Float
+        get() = mWaterLevelRatio
+        set(waterLevelRatio) {
+            if (mWaterLevelRatio != waterLevelRatio) {
+                mWaterLevelRatio = waterLevelRatio
+                invalidate()
+            }
+        }
+
+    /**
+     * Set vertical size of wave according to `amplitudeRatio`
+     *
+     * @param amplitudeRatio Default to be 0.05. Result of amplitudeRatio + waterLevelRatio should be less than 1.
+     * Ratio of amplitude to height of WaveView.
+     */
+    var amplitudeRatio: Float
+        get() = mAmplitudeRatio
+        set(amplitudeRatio) {
+            if (mAmplitudeRatio != amplitudeRatio) {
+                mAmplitudeRatio = amplitudeRatio
+                invalidate()
+            }
+        }
+
+    fun setBorder(width: Int, color: Int) {
         if (mBorderPaint == null) {
-            mBorderPaint = new Paint();
-            mBorderPaint.setAntiAlias(true);
-            mBorderPaint.setStyle(Style.STROKE);
+            mBorderPaint = Paint()
+            mBorderPaint!!.isAntiAlias = true
+            mBorderPaint!!.style = Paint.Style.STROKE
         }
-        mBorderPaint.setColor(color);
-        mBorderPaint.setStrokeWidth(width);
-
-        invalidate();
+        mBorderPaint!!.color = color
+        mBorderPaint!!.strokeWidth = width.toFloat()
+        invalidate()
     }
 
-    public void setWaveColor(int behindWaveColor, int frontWaveColor) {
-        mBehindWaveColor = behindWaveColor;
-        mFrontWaveColor = frontWaveColor;
-
-        if (getWidth() > 0 && getHeight() > 0) {
+    fun setWaveColor(behindWaveColor: Int, frontWaveColor: Int) {
+        mBehindWaveColor = behindWaveColor
+        mFrontWaveColor = frontWaveColor
+        if (width > 0 && height > 0) {
             // need to recreate shader when color changed
-            mWaveShader = null;
-            createShader();
-            invalidate();
+            mWaveShader = null
+            createShader()
+            invalidate()
         }
     }
 
-    public void setShapeType(ShapeType shapeType) {
-        mShapeType = shapeType;
-        invalidate();
+    fun setShapeType(shapeType: ShapeType) {
+        mShapeType = shapeType
+        invalidate()
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-
-        createShader();
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        createShader()
     }
 
     /**
      * Create the shader with default waves which repeat horizontally, and clamp vertically
      */
-    private void createShader() {
-        mDefaultAngularFrequency = 2.0f * Math.PI / DEFAULT_WAVE_LENGTH_RATIO / getWidth();
-        mDefaultAmplitude = getHeight() * DEFAULT_AMPLITUDE_RATIO;
-        mDefaultWaterLevel = getHeight() * DEFAULT_WATER_LEVEL_RATIO;
-        mDefaultWaveLength = getWidth();
-
-        Bitmap bitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-
-        Paint wavePaint = new Paint();
-        wavePaint.setStrokeWidth(2);
-        wavePaint.setAntiAlias(true);
+    private fun createShader() {
+        mDefaultAngularFrequency = 2.0f * Math.PI / DEFAULT_WAVE_LENGTH_RATIO / width
+        mDefaultAmplitude = height * DEFAULT_AMPLITUDE_RATIO
+        mDefaultWaterLevel = height * DEFAULT_WATER_LEVEL_RATIO
+        mDefaultWaveLength = width.toFloat()
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val wavePaint = Paint()
+        wavePaint.strokeWidth = 2f
+        wavePaint.isAntiAlias = true
 
         // Draw default waves into the bitmap
         // y=Asin(ωx+φ)+h
-        final int endX = getWidth() + 1;
-        final int endY = getHeight() + 1;
-
-        float[] waveY = new float[endX];
-
-        wavePaint.setColor(mBehindWaveColor);
-        for (int beginX = 0; beginX < endX; beginX++) {
-            double wx = beginX * mDefaultAngularFrequency;
-            float beginY = (float) (mDefaultWaterLevel + mDefaultAmplitude * Math.sin(wx));
-            canvas.drawLine(beginX, beginY, beginX, endY, wavePaint);
-
-            waveY[beginX] = beginY;
+        val endX = width + 1
+        val endY = height + 1
+        val waveY = FloatArray(endX)
+        wavePaint.color = mBehindWaveColor
+        for (beginX in 0 until endX) {
+            val wx = beginX * mDefaultAngularFrequency
+            val beginY = (mDefaultWaterLevel + mDefaultAmplitude * Math.sin(wx)).toFloat()
+            canvas.drawLine(beginX.toFloat(), beginY, beginX.toFloat(), endY.toFloat(), wavePaint)
+            waveY[beginX] = beginY
         }
-
-        wavePaint.setColor(mFrontWaveColor);
-        final int wave2Shift = (int) (mDefaultWaveLength / 4);
-        for (int beginX = 0; beginX < endX; beginX++) {
-            canvas.drawLine(beginX, waveY[(beginX + wave2Shift) % endX], beginX, endY, wavePaint);
+        wavePaint.color = mFrontWaveColor
+        val wave2Shift = (mDefaultWaveLength / 4).toInt()
+        for (beginX in 0 until endX) {
+            canvas.drawLine(
+                beginX.toFloat(),
+                waveY[(beginX + wave2Shift) % endX],
+                beginX.toFloat(),
+                endY.toFloat(),
+                wavePaint
+            )
         }
 
         // use the bitamp to create the shader
-        mWaveShader = new BitmapShader(bitmap, Shader.TileMode.REPEAT, Shader.TileMode.CLAMP);
-        mViewPaint.setShader(mWaveShader);
+        mWaveShader = BitmapShader(bitmap, Shader.TileMode.REPEAT, Shader.TileMode.CLAMP)
+        mViewPaint!!.shader = mWaveShader
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
+    override fun onDraw(canvas: Canvas) {
         // modify paint shader according to mShowWave state
-        if (mShowWave && mWaveShader != null) {
+        if (isShowWave && mWaveShader != null) {
             // first call after mShowWave, assign it to our paint
-            if (mViewPaint.getShader() == null) {
-                mViewPaint.setShader(mWaveShader);
+            if (mViewPaint!!.shader == null) {
+                mViewPaint!!.shader = mWaveShader
             }
 
             // sacle shader according to mWaveLengthRatio and mAmplitudeRatio
             // this decides the size(mWaveLengthRatio for width, mAmplitudeRatio for height) of waves
-            mShaderMatrix.setScale(
-                mWaveLengthRatio / DEFAULT_WAVE_LENGTH_RATIO,
-                mAmplitudeRatio / DEFAULT_AMPLITUDE_RATIO,
-                0,
-                mDefaultWaterLevel);
+            mShaderMatrix!!.setScale(
+                waveLengthRatio / DEFAULT_WAVE_LENGTH_RATIO,
+                mAmplitudeRatio / DEFAULT_AMPLITUDE_RATIO, 0f,
+                mDefaultWaterLevel
+            )
             // translate shader according to mWaveShiftRatio and mWaterLevelRatio
             // this decides the start position(mWaveShiftRatio for x, mWaterLevelRatio for y) of waves
-            mShaderMatrix.postTranslate(
-                mWaveShiftRatio * getWidth(),
-                (DEFAULT_WATER_LEVEL_RATIO - mWaterLevelRatio) * getHeight());
+            mShaderMatrix!!.postTranslate(
+                mWaveShiftRatio * width,
+                (DEFAULT_WATER_LEVEL_RATIO - mWaterLevelRatio) * height
+            )
 
             // assign matrix to invalidate the shader
-            mWaveShader.setLocalMatrix(mShaderMatrix);
-
-            float borderWidth = mBorderPaint == null ? 0f : mBorderPaint.getStrokeWidth();
-            switch (mShapeType) {
-                case CIRCLE:
+            mWaveShader!!.setLocalMatrix(mShaderMatrix)
+            val borderWidth = if (mBorderPaint == null) 0f else mBorderPaint!!.strokeWidth
+            when (mShapeType) {
+                ShapeType.CIRCLE -> {
                     if (borderWidth > 0) {
-                        canvas.drawCircle(getWidth() / 2f, getHeight() / 2f,
-                            (getWidth() - borderWidth) / 2f - 1f, mBorderPaint);
+                        canvas.drawCircle(
+                            width / 2f, height / 2f,
+                            (width - borderWidth) / 2f - 1f, mBorderPaint!!
+                        )
                     }
-                    float radius = getWidth() / 2f - borderWidth;
-                    canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, radius, mViewPaint);
-                    break;
-                case SQUARE:
+                    val radius = width / 2f - borderWidth
+                    canvas.drawCircle(width / 2f, height / 2f, radius, mViewPaint!!)
+                }
+                ShapeType.SQUARE -> {
                     if (borderWidth > 0) {
                         canvas.drawRect(
                             borderWidth / 2f,
                             borderWidth / 2f,
-                            getWidth() - borderWidth / 2f - 0.5f,
-                            getHeight() - borderWidth / 2f - 0.5f,
-                            mBorderPaint);
+                            width - borderWidth / 2f - 0.5f,
+                            height - borderWidth / 2f - 0.5f,
+                            mBorderPaint!!
+                        )
                     }
-                    canvas.drawRect(borderWidth, borderWidth, getWidth() - borderWidth,
-                        getHeight() - borderWidth, mViewPaint);
-                    break;
+                    canvas.drawRect(
+                        borderWidth, borderWidth, width - borderWidth,
+                        height - borderWidth, mViewPaint!!
+                    )
+                }
             }
         } else {
-            mViewPaint.setShader(null);
+            mViewPaint!!.shader = null
         }
+    }
+
+    companion object {
+        /**
+         * +------------------------+
+         * |<--wave length->        |______
+         * |   /\          |   /\   |  |
+         * |  /  \         |  /  \  | amplitude
+         * | /    \        | /    \ |  |
+         * |/      \       |/      \|__|____
+         * |        \      /        |  |
+         * |         \    /         |  |
+         * |          \  /          |  |
+         * |           \/           | water level
+         * |                        |  |
+         * |                        |  |
+         * +------------------------+__|____
+         */
+        private const val DEFAULT_AMPLITUDE_RATIO = 0.05f
+        private const val DEFAULT_WATER_LEVEL_RATIO = 0.5f
+        private const val DEFAULT_WAVE_LENGTH_RATIO = 1.0f
+        private const val DEFAULT_WAVE_SHIFT_RATIO = 0.0f
+        val DEFAULT_BEHIND_WAVE_COLOR = Color.parseColor("#28FFFFFF")
+        val DEFAULT_FRONT_WAVE_COLOR = Color.parseColor("#3CFFFFFF")
+        val DEFAULT_WAVE_SHAPE = ShapeType.CIRCLE
     }
 }
