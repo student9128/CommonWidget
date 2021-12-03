@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
  */
 class AppUtils {
     companion object {
-        private var isDebugMode = false
+        private var isDebugMode = true
         private var mContext: Context? = null
         fun isDebug(): Boolean {
             return isDebugMode

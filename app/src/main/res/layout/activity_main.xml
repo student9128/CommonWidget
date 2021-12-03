@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,25 +7,70 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <com.kevin.commonwidget.ToggleView
-        android:layout_width="60dp"
-        android:layout_height="30dp"
-        app:toggleBorderWidth="3dp"
-        app:toggleCheckedColor="@color/teal_700" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hello World!"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <com.kevin.commonwidget.ToggleView
-        android:layout_width="60dp"
-        android:layout_height="30dp"
-        app:toggleBorderWidth="3dp"
-        app:toggleCheckedColor="@color/purple_200"
-        app:toggleType="rectangle" />
-</LinearLayout>
+        <com.kevin.commonwidget.ToggleView
+            android:layout_width="60dp"
+            android:layout_height="30dp"
+            app:toggleBorderWidth="3dp"
+            app:toggleCheckedColor="@color/teal_700" />
+
+        <com.kevin.commonwidget.ToggleView
+            android:layout_width="60dp"
+            android:layout_height="30dp"
+            app:toggleBorderWidth="3dp"
+            app:toggleCheckedColor="@color/purple_200"
+            app:toggleType="rectangle" />
+
+        <com.kevin.commonwidgetlib.WaveView
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:background="@color/purple_500" />
+
+        <!--    <com.kevin.commonwidgetlib.ProgressWaveView-->
+        <!--        android:layout_width="200dp"-->
+        <!--        android:layout_height="200dp" />-->
+        <com.kevin.commonwidget.CircleWaveView
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:padding="5dp"
+            android:background="@color/design_default_color_error"
+            app:waveColor="@color/teal_700" />
+
+        <com.kevin.commonwidget.CircleWaveView
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:background="@color/purple_200"
+            app:backgroundColor="@color/design_default_color_error"
+            app:circleType="stroke"
+            app:waveCount="1" />
+
+        <com.kevin.commonwidget.CircleWaveView
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            app:backgroundColor="@color/purple_700"
+            app:circleType="fill"
+            app:waveCount="1" />
+        <com.kevin.commonwidgetlib.WaveXView
+            android:layout_width="300dp"
+            app:waveXShape="circle"
+            app:behindWaveColor="@color/design_default_color_error"
+            app:frontWaveColor="@color/purple_200"
+            app:showWave="true"
+            app:waveShiftRatio="0.5"
+            android:layout_height="300dp"/>
+    </LinearLayout>
+
+</ScrollView>
