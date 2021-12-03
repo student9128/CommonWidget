@@ -35,7 +35,7 @@
             app:toggleCheckedColor="@color/purple_200"
             app:toggleType="rectangle" />
 
-        <com.kevin.commonwidgetlib.WaveView
+        <com.kevin.commonwidgetlib.WaveViewX
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:background="@color/purple_500" />
@@ -58,7 +58,7 @@
             app:backgroundColor="@color/design_default_color_error"
             app:circleType="stroke"
             app:showProgressText="true"
-            app:waveCount="1" />
+            app:waveCount="3" />
 
         <com.kevin.commonwidget.CircleWaveView
             android:id="@+id/cwv"
@@ -70,18 +70,43 @@
             app:waveCount="1" />
 
         <com.kevin.commonwidget.CircleWaveView
-            android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             app:backgroundColor="@color/teal_200"
-            app:circleStrokeWidth="30dp"
+            app:circleStrokeWidth="15dp"
             app:circleType="stroke"
             app:showProgressText="true"
             app:showStroke="true"
-            app:textSize="20sp"
             app:textColor="@color/teal_200"
+            app:textSize="20sp"
             app:waveColor="@color/yellow"
             app:waveCount="1" />
 
+        <com.kevin.commonwidget.CircleWaveView
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            app:circleStrokeWidth="15dp"
+            app:circleType="stroke"
+            app:showProgressText="true"
+            app:showStroke="true"
+            app:textColor="@color/teal_200"
+            app:textSize="20sp"
+            app:waveCount="1"
+            app:waveDuration="2000"
+            app:waveType="dual" />
+
+        <!--        <com.kevin.commonwidgetlib.WaveViewX-->
+        <!--            android:layout_width="200dp"-->
+        <!--            android:id="@+id/hello"-->
+        <!--            android:layout_height="200dp" />-->
+        <Button
+            android:id="@+id/sb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:max="100"
+            android:min="10"
+            android:progress="10" />
     </LinearLayout>
 
 </ScrollView>

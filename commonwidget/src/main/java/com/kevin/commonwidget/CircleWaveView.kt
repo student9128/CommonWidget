@@ -23,19 +23,26 @@ class CircleWaveView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) :
-    View(context, attrs, defStyleAttr), View.OnClickListener {
+    View(context, attrs, defStyleAttr) {
     companion object {
         val circleFill = 100
         val circleStroke = 101
+        val single = 1000
+        val dual = 1001
     }
 
-    private val mDefaultBackgroundColor = 0xff2196f3.toInt()
-    var mBackgroundColor: Int = 0xffebebeb.toInt()
+    private val mDefaultBackgroundColor = 0xff00E0FF.toInt()
+    var mBackgroundColor: Int = 0xff00E0FF.toInt()
         set(value) {
             field = value
             invalidate()
         }
-    var mWaveColor: Int = 0xFF03DAC5.toInt()
+    var mWaveColor: Int = 0xFF74F9FF.toInt()
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mWaveColorSecond: Int = 0xAAA6FFF2.toInt()
         set(value) {
             field = value
             invalidate()
@@ -46,6 +53,11 @@ class CircleWaveView @JvmOverloads constructor(
             invalidate()
         }
     var mCircleType = circleFill
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mWaveType = single
         set(value) {
             field = value
             invalidate()
@@ -90,6 +102,11 @@ class CircleWaveView @JvmOverloads constructor(
             field = value
             invalidate()
         }
+    var mAutoAnim = true
+        set(value) {
+            field = value
+            invalidate()
+        }
     private var mDefaultWidth = 10
     private var mDefaultHeight = 10
     private var mR = 5f
@@ -106,8 +123,9 @@ class CircleWaveView @JvmOverloads constructor(
     private val mWavePaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
     private val mProgressPaint: Paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
     private var offset = 0
-    private var clickCount = 0
+    private var offset1 = 0
     private var animator: ValueAnimator? = null
+    private var animator1: ValueAnimator? = null
     private var mSwing = 0
     private var percent = 0f
     private val mPath: Path by lazy { Path() }
@@ -117,10 +135,13 @@ class CircleWaveView @JvmOverloads constructor(
         typedArray?.let {
             mBackgroundColor =
                 it.getColor(R.styleable.CircleWaveView_backgroundColor, mDefaultBackgroundColor)
-            mWaveColor = it.getColor(R.styleable.CircleWaveView_waveColor, 0xFF03DAC5.toInt())
+            mWaveColor = it.getColor(R.styleable.CircleWaveView_waveColor, 0xFF74F9FF.toInt())
+            mWaveColorSecond =
+                it.getColor(R.styleable.CircleWaveView_waveColorSecond, 0xAAA6FFF2.toInt())
             mWaveCount = it.getInt(R.styleable.CircleWaveView_waveCount, 2)
             mProgressColor = it.getColor(R.styleable.CircleWaveView_textColor, 0xFFFFFFFF.toInt())
             mCircleType = it.getInt(R.styleable.CircleWaveView_circleType, circleFill)
+            mWaveType = it.getInt(R.styleable.CircleWaveView_waveType, single)
             mCircleStrokeWidth = it.getDimensionPixelSize(
                 R.styleable.CircleWaveView_circleStrokeWidth,
                 DisplayUtils.dip2px(getContext(), 2f)
@@ -134,12 +155,11 @@ class CircleWaveView @JvmOverloads constructor(
             mShowStroke = it.getBoolean(R.styleable.CircleWaveView_showStroke, false)
             mWaveDuration = it.getInt(R.styleable.CircleWaveView_waveDuration, 3000)
             mProgressDuration = it.getInt(R.styleable.CircleWaveView_progressDuration, 5000)
+            mAutoAnim = it.getBoolean(R.styleable.CircleWaveView_autoAnim, true)
             it.recycle()
         }
         mDefaultWidth = DisplayUtils.dip2px(getContext(), 50f)
         mDefaultHeight = DisplayUtils.dip2px(getContext(), 50f)
-
-        setOnClickListener(this)
 
     }
 
@@ -148,7 +168,6 @@ class CircleWaveView @JvmOverloads constructor(
         val width = getSmartSize(mDefaultWidth, widthMeasureSpec)
         val height = getSmartSize(mDefaultHeight, heightMeasureSpec)
         val size = min(width, height)
-//        LogUtils.logD("CircleWave", "size=$size,width=$width,height=$height")
         setMeasuredDimension(size, size)
     }
 
@@ -179,11 +198,14 @@ class CircleWaveView @JvmOverloads constructor(
         val width = width - paddingLeft - paddingRight
         val height = height - paddingTop - paddingBottom
         mSwing = width / 10
+        animator = ValueAnimator.ofInt(0, mWaveLength * 2)
+        animator1 = ValueAnimator.ofInt(0, mWaveLength * 2)
+        if (mAutoAnim) startAnim()
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        LogUtils.logW("CircleWave", "onDraw waveColor=$mWaveColor")
+//        LogUtils.logW("CircleX", "onDraw waveColor=$mWaveColor,radio=$radio")
         mBackgroundPaint.color = mBackgroundColor
         mWavePaint.color = mWaveColor
         mBackgroundPaint.style =
@@ -211,7 +233,11 @@ class CircleWaveView @JvmOverloads constructor(
                 )
             }
         }
-        drawWave(canvas, centerX, centerY)
+        if (mWaveType == dual) {
+            drawWave(canvas, centerX, centerY, true)
+        }
+        drawWave(canvas, centerX, centerY, false)
+
         if (mShowStroke) {
             canvas?.let {
                 it.drawCircle(
@@ -225,25 +251,26 @@ class CircleWaveView @JvmOverloads constructor(
         drawText(canvas, centerX, centerY)
     }
 
-    private fun drawWave(canvas: Canvas?, centerX: Float, centerY: Float) {
+    private fun drawWave(canvas: Canvas?, centerX: Float, centerY: Float, isSecond: Boolean) {
+        mWavePaint.color = if (isSecond) mWaveColorSecond else mWaveColor
+        mPath.reset()
         val endY: Int =
             if (percent >= 100) -mSwing else ((mBottom - mTop) * (1 - percent / 100)).toInt()
         mPath.moveTo(0f, endY.toFloat())
         for (i in 0..(mWaveCount * 2)) {
-//            LogUtils.logD("CircleWave", "i=$i,mWaveCount=$mWaveCount")
             val y = if (i % 2 == 0) {
-                endY + mSwing
-//                centerY - mSwing
+                if (isSecond) endY - mSwing
+                else endY + mSwing
             } else {
-//                centerY + mSwing
-                endY - mSwing
+                if (isSecond) endY + mSwing
+                else endY - mSwing
             }
-            val x = (i * mWaveLength + mWaveLength / 2 - mWaveLength * 2 + offset).toFloat()
-//            LogUtils.logD("CircleWave", "xx=${(i + 1) * mWaveLength.toFloat()},x=$x,offset=$offset")
+            val x =
+                (i * mWaveLength + mWaveLength / 2 - mWaveLength * 2 + if (isSecond) offset1 else offset).toFloat()
             mPath.quadTo(
                 x,
                 y.toFloat(),
-                ((i + 1) * mWaveLength - mWaveLength * 2 + offset).toFloat(),
+                ((i + 1) * mWaveLength - mWaveLength * 2 + if (isSecond) offset1 else offset).toFloat(),
                 endY.toFloat()
             )
         }
@@ -267,9 +294,7 @@ class CircleWaveView @JvmOverloads constructor(
         canvas!!.drawText(text, textLeft, textBottom, mProgressPaint)
     }
 
-    private fun startAnim() {
-        var i = 0
-        animator = ValueAnimator.ofInt(0, mWaveLength * 2)
+    fun startAnim() {
         animator?.let {
             it.duration = mWaveDuration.toLong()
             it.repeatCount = ValueAnimator.INFINITE
@@ -284,7 +309,22 @@ class CircleWaveView @JvmOverloads constructor(
                     }
                 }
             }
-//        it.startDelay
+            it.start()
+        }
+        animator1?.let {
+            it.duration = (mWaveDuration * 1.5).toLong()
+            it.repeatCount = ValueAnimator.INFINITE
+            it.interpolator = LinearInterpolator()
+            it.addUpdateListener { animation ->
+                offset1 = animation?.animatedValue as Int
+//                LogUtils.logD("CircleWave", "offset-$offset,i======${++i}")
+                invalidate()
+                if (percent >= 100) {
+                    if (it.isRunning) {
+                        it.cancel()
+                    }
+                }
+            }
             it.start()
         }
         val a = ValueAnimator.ofFloat(0f, mProgress.toFloat())
@@ -302,8 +342,31 @@ class CircleWaveView @JvmOverloads constructor(
         }
     }
 
-    override fun onClick(v: View?) {
-        startAnim()
+    fun stopAnim() {
+        animator?.let {
+            if (it.isRunning) {
+                it.pause()
+            }
+        }
+        animator1?.let {
+            if (it.isRunning) {
+                it.pause()
+            }
+        }
+    }
+
+    fun destroy() {
+        animator = null
+        animator1 = null
+    }
+
+    fun setProgress(progress: Int) {
+        this.percent = progress.toFloat()
+        invalidate()
+    }
+
+    fun getProgress(): Int {
+        return percent.toInt()
     }
 
 }

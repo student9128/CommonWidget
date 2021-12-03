@@ -9,7 +9,7 @@
         <attr name="textIsDisplayable" format="boolean" />
         <attr name="contentColor" format="color" />
         <attr name="text" format="string" />
-        <attr name="progress"/>
+        <attr name="progress" />
     </declare-styleable>
     <declare-styleable name="ToggleView">
         <attr name="toggleColor" format="color" />
@@ -70,14 +70,12 @@
     <attr name="duration" format="integer" />
     <attr name="progress" format="integer" />
     <attr name="showProgressText" format="boolean" />
+    <attr name="autoAnim" format="boolean" />
     <!-- 通用属性 end-->
     <declare-styleable name="CircleWaveView">
+        <attr name="autoAnim"/>
         <attr name="waveColor" />
         <attr name="backgroundColor" />
-        <attr name="circleType">
-            <enum name="fill" value="100" />
-            <enum name="stroke" value="101" />
-        </attr>
         <attr name="circleStrokeWidth" format="dimension" />
         <attr name="textSize" />
         <attr name="textColor" />
@@ -87,6 +85,15 @@
         <attr name="progress" />
         <attr name="showProgressText" />
         <attr name="showStroke" format="boolean" />
+        <attr name="circleType">
+            <enum name="fill" value="100" />
+            <enum name="stroke" value="101" />
+        </attr>
+        <attr name="waveType" format="enum">
+            <enum name="single" value="1000" />
+            <enum name="dual" value="1001" />
+        </attr>
+        <attr name="waveColorSecond" format="color" />
     </declare-styleable>
     <declare-styleable name="WaveXView">
         <attr name="waveWaterLevel" format="float" />
